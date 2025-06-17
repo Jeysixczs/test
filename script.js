@@ -322,95 +322,103 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayChapterViewer() {
-        modalBody.innerHTML = `
-            <div class="chapter-viewer">
-                <div class="chapter-header">
-                    <h2>Chapter ${currentChapter}</h2>
-                   
-                    <button class="close-chapter" id="close-chapter">
-                        <i class="fas fa-times"></i> Back to Details
-                    </button>
-                </div>
-                <div class="chapter-images" id="chapter-images">
-                    ${currentChapterImages.map((img, index) => `
-                        <div class="chapter-image ${index === 0 ? 'active' : ''}">
-                            <img src="${img.url}" 
-                                 alt="Page ${index + 1}'">
-                        </div>
-                    `).join('')}
-                </div>
+    modalBody.innerHTML = `
+        <div class="chapter-viewer">
+            <div class="chapter-header">
+                <h2>Chapter ${currentChapter}</h2>
+                <button class="close-chapter" id="close-chapter">
+                    <i class="fas fa-times"></i> Back to Details
+                </button>
             </div>
-        `;
-        
-        // Add event listeners
-        document.getElementById('close-chapter').addEventListener('click', () => {
-            loadManhwaDetails(currentManhwaId);
-        });
-        
-        setupChapterNavigation();
-    }
+            
+            <div class="chapter-nav-container">
+               
+
+                <button id="next-chapter-btn" class="chapter-nav-btn">
+                   <i class="fas fa-arrow-left"></i> Previous Chapter 
+                </button>
+                
+                <div class="page-nav">
+                    <button id="prev-page-btn"><i class="fas fa-chevron-left"></i></button>
+                    <span id="current-page-display">1/${currentChapterImages.length}</span>
+                    <button id="next-page-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                
+                 <button id="prev-chapter-btn" class="chapter-nav-btn">
+                     Next Chapter <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+            
+            <div class="chapter-images" id="chapter-images">
+                ${currentChapterImages.map((img, index) => `
+                    <div class="chapter-image ${index === 0 ? 'active' : ''}">
+                        <img src="${img.url}" alt="Page ${index + 1}" loading="lazy">
+                    </div>
+                `).join('')}
+            </div>
+            
+            <div class="chapter-nav-container">
+                <button id="next-chapter-bottom-btn" class="chapter-nav-btn">
+                    <i class="fas fa-arrow-left"></i> Previous Chapter
+                </button>
+                
+                <div class="page-nav">
+                    <button id="prev-page-bottom-btn"><i class="fas fa-chevron-left"></i></button>
+                    <span id="current-page-bottom-display">1/${currentChapterImages.length}</span>
+                    <button id="next-page-bottom-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                
+                
+
+                <button id="prev-chapter-bottom-btn" class="chapter-nav-btn">
+                   Next Chapter  <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Add event listeners
+    document.getElementById('close-chapter').addEventListener('click', () => {
+        loadManhwaDetails(currentManhwaId);
+    });
+    
+    // Setup navigation
+    setupChapterNavigation();
+}
+
                                 
 
                                     
-  function setupChapterNavigation() {
+function setupChapterNavigation() {
     let currentPageIndex = 0;
-    const chapterImagesContainer = document.getElementById('chapter-images');
     const images = document.querySelectorAll('.chapter-image');
-    const pageIndicator = document.getElementById('current-page-display');
+    const totalPages = images.length;
     
-    // Create chapter navigation container
-    const chapterNavContainer = document.createElement('div');
-    chapterNavContainer.className = 'chapter-nav-container';
-    chapterNavContainer.innerHTML = `
-
-        <button id="next-chapter-btn" class="chapter-nav-btn">
-            <i class="fas fa-arrow-left"></i>Previous Chapter 
-        </button>
+    // Update page display
+    function updatePageDisplay() {
+        document.getElementById('current-page-display').textContent = 
+            `${currentPageIndex + 1}/${totalPages}`;
+        document.getElementById('current-page-bottom-display').textContent = 
+            `${currentPageIndex + 1}/${totalPages}`;
         
-        <div class="page-nav">
-            <button id="prev-page-btn"><i class="fas fa-chevron-left"></i></button>
-            <span id="current-page-display">1/${images.length}</span>
-            <button id="next-page-btn"><i class="fas fa-chevron-right"></i></button>
-        </div>
-
-        <button id="prev-chapter-btn" class="chapter-nav-btn">
-             Next Chapter<i class="fas fa-arrow-right"></i>
-        </button>
+        // Show/hide images
+        images.forEach((img, index) => {
+            img.classList.toggle('active', index === currentPageIndex);
+        });
         
-    `;
-    
-    // Insert the navigation container before the chapter images
-    chapterImagesContainer.parentNode.insertBefore(chapterNavContainer, chapterImagesContainer);
-    
-    // Scroll to the active image
-    function scrollToActiveImage() {
-        const activeImage = images[currentPageIndex];
-        if (activeImage) {
-            activeImage.scrollIntoView({ 
+        // Scroll to active image
+        if (images[currentPageIndex]) {
+            images[currentPageIndex].scrollIntoView({ 
                 behavior: 'smooth', 
                 block: 'center' 
             });
         }
-    }
-    
-    function showPage(index) {
-        // Validate index range
-        index = Math.max(0, Math.min(index, images.length - 1));
-        
-        images.forEach((img, i) => {
-            img.classList.toggle('active', i === index);
-        });
-        
-        pageIndicator.textContent = `${index + 1}/${images.length}`;
-        currentPageIndex = index;
-        
-        // Scroll to the new active image
-        scrollToActiveImage();
         
         // Update chapter navigation button states
         updateChapterNavButtons();
     }
     
+    // Update chapter navigation buttons
     function updateChapterNavButtons() {
         if (!currentManhwaDetails || !currentManhwaDetails.chapters) return;
         
@@ -418,32 +426,35 @@ document.addEventListener('DOMContentLoaded', function() {
             ch => ch.chapterNumber === currentChapter
         );
         
+        // Top navigation
         document.getElementById('prev-chapter-btn').disabled = currentChapterIndex <= 0;
         document.getElementById('next-chapter-btn').disabled = 
             currentChapterIndex >= currentManhwaDetails.chapters.length - 1;
+        
+        // Bottom navigation
+        document.getElementById('prev-chapter-bottom-btn').disabled = currentChapterIndex <= 0;
+        document.getElementById('next-chapter-bottom-btn').disabled = 
+            currentChapterIndex >= currentManhwaDetails.chapters.length - 1;
     }
     
-    // Initial scroll to first image
-    scrollToActiveImage();
-    updateChapterNavButtons();
-    
-    // Previous page button handler
-    document.getElementById('prev-page-btn').addEventListener('click', () => {
+    // Page navigation handlers
+    function goToPreviousPage() {
         if (currentPageIndex > 0) {
-            showPage(currentPageIndex - 1);
+            currentPageIndex--;
+            updatePageDisplay();
         }
-    });
+    }
     
-    // Next page button handler
-    document.getElementById('next-page-btn').addEventListener('click', () => {
-        if (currentPageIndex < images.length - 1) {
-            showPage(currentPageIndex + 1);
+    function goToNextPage() {
+        if (currentPageIndex < totalPages - 1) {
+            currentPageIndex++;
+            updatePageDisplay();
         }
-    });
+    }
     
-    // Previous chapter button handler
-    document.getElementById('prev-chapter-btn').addEventListener('click', async () => {
-        if (!currentManhwaDetails || !currentManhwaDetails.chapters) return;
+    // Chapter navigation handlers
+    async function goToPreviousChapter() {
+        if (!currentManhwaDetails?.chapters) return;
         
         const currentChapterIndex = currentManhwaDetails.chapters.findIndex(
             ch => ch.chapterNumber === currentChapter
@@ -453,11 +464,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const prevChapter = currentManhwaDetails.chapters[currentChapterIndex - 1];
             await loadChapterImages(currentManhwaId, prevChapter.chapterNumber);
         }
-    });
+    }
     
-    // Next chapter button handler
-    document.getElementById('next-chapter-btn').addEventListener('click', async () => {
-        if (!currentManhwaDetails || !currentManhwaDetails.chapters) return;
+    async function goToNextChapter() {
+        if (!currentManhwaDetails?.chapters) return;
         
         const currentChapterIndex = currentManhwaDetails.chapters.findIndex(
             ch => ch.chapterNumber === currentChapter
@@ -467,47 +477,31 @@ document.addEventListener('DOMContentLoaded', function() {
             const nextChapter = currentManhwaDetails.chapters[currentChapterIndex + 1];
             await loadChapterImages(currentManhwaId, nextChapter.chapterNumber);
         }
-    });
+    }
+    
+    // Add event listeners
+    document.getElementById('prev-page-btn').addEventListener('click', goToPreviousPage);
+    document.getElementById('next-page-btn').addEventListener('click', goToNextPage);
+    document.getElementById('prev-page-bottom-btn').addEventListener('click', goToPreviousPage);
+    document.getElementById('next-page-bottom-btn').addEventListener('click', goToNextPage);
+    
+    document.getElementById('prev-chapter-btn').addEventListener('click', goToPreviousChapter);
+    document.getElementById('next-chapter-btn').addEventListener('click', goToNextChapter);
+    document.getElementById('prev-chapter-bottom-btn').addEventListener('click', goToPreviousChapter);
+    document.getElementById('next-chapter-bottom-btn').addEventListener('click', goToNextChapter);
     
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft' && currentPageIndex > 0) {
-            showPage(currentPageIndex - 1);
-        } else if (e.key === 'ArrowRight' && currentPageIndex < images.length - 1) {
-            showPage(currentPageIndex + 1);
+        if (e.key === 'ArrowLeft') {
+            goToPreviousPage();
+        } else if (e.key === 'ArrowRight') {
+            goToNextPage();
         }
     });
     
-    // Touch/swipe support for mobile
-    let touchStartX = 0;
-    let touchEndX = 0;
-    
-    chapterImagesContainer.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-    
-    chapterImagesContainer.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    }, { passive: true });
-    
-    function handleSwipe() {
-        const threshold = 50; // Minimum swipe distance
-        
-        if (touchStartX - touchEndX > threshold) {
-            // Swipe left - go to next page
-            if (currentPageIndex < images.length - 1) {
-                showPage(currentPageIndex + 1);
-            }
-        } else if (touchEndX - touchStartX > threshold) {
-            // Swipe right - go to previous page
-            if (currentPageIndex > 0) {
-                showPage(currentPageIndex - 1);
-            }
-        }
-    }
+    // Initialize
+    updatePageDisplay();
 }
-
 
 
     function displayErrorDetails(manhwaId, errorMessage) {
